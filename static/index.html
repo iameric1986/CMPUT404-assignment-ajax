@@ -34,8 +34,9 @@ var H = canvas.height = window.innerHeight-50;
 
 function sendJSONXMLHTTPRequest(url, objects, callback) {
     var xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
     xhr.onreadystatechange = function () {
-        if (xhr.readyState==4  && callback != null) {
+        if (xhr.readyState==4) {
             try {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
@@ -43,7 +44,7 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
                     // Ref: http://stackoverflow.com/questions/1973140/parsing-json-from-xmlhttprequest-responsejson
                     // Author: Torben
                     var someJson = JSON.parse(xhr.responseText);
-                    //console.log(someJson);
+                    //console.log(xhr.responseText);
                     callback(url, someJson, callback);
                 }
             } 
@@ -55,7 +56,6 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     //XXX: POST to a URL
     //XXX: set the mimetype and the accept headers!
     // Remember to use application/json !
-    xhr.open("POST", url, true);
     xhr.setRequestHeader("Accept", "application/json");
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send(objects);
@@ -152,7 +152,7 @@ function addEntity(entity, data) {
     // Using the function sendJSONXMLHTTPRequest(url, objects, callback)
     
     // console.log(); The object is the data
-    // console.log(entity);  var name = "X"+(counter++)%100 from the caller is the entity. It tracks the mouse input and outputs it as a string
+    // console.log(entity);  var name = "X"+(counter++)%100 from the caller is the entity. It tracks the mouse input as a string
     // Therefore world[entity] is a dictionary with the key being the mouse input tracker/counter with the value being the JSON object
 
     // var host = window.location.host; Has the host name
@@ -161,7 +161,7 @@ function addEntity(entity, data) {
     // Converting JSON object to string
     // Ref: http://stackoverflow.com/questions/4162749/convert-js-object-to-json-string
     // Author: Andris
-    sendJSONXMLHTTPRequest(url, JSON.stringify(data), sendJSONXMLHTTPRequest);
+    sendJSONXMLHTTPRequest(url, JSON.stringify(data), prepEntity);
 }
 
 var counter = 0;
@@ -286,7 +286,11 @@ mouse.mousedraggers.push(function (x, y, clicked, e) {
 //Taste the rainbow.
 function colorWheel() {
     var colors = ['red', 'green', 'blue', 'orange', 'purple', 'yellow'];
-    var selector = Math.floor(Math.random() * colors.length) + 1;
+
+    //Select a random color of the rainbow
+    //Ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+    //Author: Mozilla
+    var selector = Math.floor(Math.random() * (colors.length + 1));
     console.log(selector);
     return colors[selector];
 }
@@ -299,8 +303,22 @@ function update() {
     // We need to make URL in order to open it.
     var url = "http://" + host + "/world" // Call the world endpoint with GET
     xhr.open("GET", url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            try {
+                if (xhr.status === 200) {
+                    //console.log(xhr.responseText);
+                    drawFrame();
+                }
+            }
+            catch (e) {
+                alert("Error " + e);
+            }
+        }
+    }
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
     xhr.send();
-    drawFrame();
 }
 
 // 30 frames per second
