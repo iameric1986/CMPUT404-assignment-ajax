@@ -22,7 +22,7 @@
 
 
 import flask
-from flask import Flask, request
+from flask import Flask, request, redirect, jsonify
 import json
 app = Flask(__name__)
 app.debug = True
@@ -71,30 +71,50 @@ def flask_post_json():
     else:
         return json.loads(request.form.keys()[0])
 
+# Parse the JSON object and update the World
+def data_parse(entity, data):
+    for axis, coord in data.iteritems():
+        myWorld.update(entity, axis, coord)
+    return
+
+
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    return redirect("/static/index.html")
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    entity_data = flask_post_json()
+
+    if (len(entity_data) == 0): #Make sure there is data
+        return None
+
+    if (request.method == 'POST'): # Update the object if it is a POST
+        data_parse(entity, entity_data)
+        return josnify(myWorld.get(entity))
+    # Assume that if the method is not POST it is automatically PUT since this end-point only accepts POST and PUT REST requests
+    # We create a new entity in the world.
+    myWorld.set(entity, data)
+    return jsonify(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return None
+    return jsonify(myWorld.world)
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    entity_data = json.dumps(myWorld.get(entity))
+    return jsonify(entity_data)
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    myWorld.clear()
+    return jsonify(myWorld.world())
 
 if __name__ == "__main__":
     app.run()
