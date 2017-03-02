@@ -72,11 +72,18 @@ def flask_post_json():
         return json.loads(request.form.keys()[0])
 
 # Parse the JSON object and update the World
+# Ref: http://stackoverflow.com/questions/2733813/iterating-through-a-json-object
+# Author: tzot
 def data_parse(entity, data):
     for axis, coord in data.iteritems():
         myWorld.update(entity, axis, coord)
     return
 
+# General reference to Flask API documentation for how to do stuff
+# Ref: http://flask.pocoo.org/docs/0.12/api/
+
+# General reference to Python JSON API documentation for how to do the things
+# Ref: https://docs.python.org/2/library/json.html
 
 @app.route("/")
 def hello():
@@ -94,6 +101,7 @@ def update(entity):
     if (request.method == 'POST'): # Update the object if it is a POST
         data_parse(entity, entity_data)
         return josnify(myWorld.get(entity))
+
     # Assume that if the method is not POST it is automatically PUT since this end-point only accepts POST and PUT REST requests
     # We create a new entity in the world.
     myWorld.set(entity, data)
@@ -102,19 +110,20 @@ def update(entity):
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return jsonify(myWorld.world)
+    # If we're simply returning the world with this end point then we do not need to do separate operations for each RESTful method
+    return jsonify(myWorld.world) # Wrap the JSON dump into a Response object with JSON mimetype
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    entity_data = json.dumps(myWorld.get(entity))
-    return jsonify(entity_data)
+    entity_data = json.dumps(myWorld.get(entity)) # First we serialize the dict to a JSON formatted string
+    return jsonify(entity_data) # Wrap the JSON dump into a Response object with JSON mimetype
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    myWorld.clear()
-    return jsonify(myWorld.world())
+    myWorld.clear() # myWorld.space now points to an empty dictionary
+    return jsonify(myWorld.world()) # Since there are no "entitys" (aka dict entries), we do not need to JSON dump the dict.
 
 if __name__ == "__main__":
     app.run()
