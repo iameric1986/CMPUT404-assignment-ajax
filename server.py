@@ -75,7 +75,9 @@ def flask_post_json():
 # Ref: http://stackoverflow.com/questions/2733813/iterating-through-a-json-object
 # Author: tzot
 def data_parse(entity, data):
+    #print("Parsing data " + data);
     for axis, coord in data.iteritems():
+        #print("Axis is " + axis + " coord is " + coord)
         myWorld.update(entity, axis, coord)
     return
 
@@ -88,42 +90,48 @@ def data_parse(entity, data):
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
+    #print("Root")
     return redirect("/static/index.html")
 
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
     entity_data = flask_post_json()
-
+    
     if (len(entity_data) == 0): #Make sure there is data
+        print("No data")
         return None
 
     if (request.method == 'POST'): # Update the object if it is a POST
+        #print("POST/entity/<entity>")
         data_parse(entity, entity_data)
-        return josnify(myWorld.get(entity))
+        return jsonify(myWorld.get(entity))
 
     # Assume that if the method is not POST it is automatically PUT since this end-point only accepts POST and PUT REST requests
     # We create a new entity in the world.
-    myWorld.set(entity, data)
+    #print("PUT/entity/<entity>")
+    myWorld.set(entity, entity_data)
     return jsonify(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
+    #print("/world")
     '''you should probably return the world here'''
     # If we're simply returning the world with this end point then we do not need to do separate operations for each RESTful method
-    return jsonify(myWorld.world) # Wrap the JSON dump into a Response object with JSON mimetype
+    return jsonify(myWorld.world()) # Wrap the dict into a Response object with JSON mimetype
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
+    #print("GET/entity/<entity>")
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    entity_data = json.dumps(myWorld.get(entity)) # First we serialize the dict to a JSON formatted string
-    return jsonify(entity_data) # Wrap the JSON dump into a Response object with JSON mimetype
+    return jsonify(myWorld.get(entity)) # Wrap the dict into a Response object with JSON mimetype
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
+    #print("/clear")
     '''Clear the world out!'''
     myWorld.clear() # myWorld.space now points to an empty dictionary
-    return jsonify(myWorld.world()) # Since there are no "entitys" (aka dict entries), we do not need to JSON dump the dict.
+    return jsonify(myWorld.world()) # Wrap the dict into a Response object with JSON mimetype
 
 if __name__ == "__main__":
     app.run()
